@@ -1,0 +1,23 @@
+{
+	"ImportPath": "livereload",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v72",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/fsnotify/fsnotify",
+			"Comment": "v1.4.2",
+			"Rev": "629574ca2a5df945712d3079857300b5e4da0236"
+		},
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "9bb9f0998d48b31547d975974935ae9b48c7a03c"
+		}
+	]
+}
