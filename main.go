@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"livereload/colorlog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,7 +21,6 @@ var (
 	eventTime    = make(map[string]int64)
 	scheduleTime time.Time
 )
-var ColorLog = glog.Infof
 
 const usage = `
 
@@ -38,6 +38,11 @@ type watch struct {
 	appName   string    // 输出的程序文件
 	appCmd    *exec.Cmd // appName的命令行包装引用，方便结束其进程。
 	goCmdArgs []string  // 传递给go build的参数
+}
+
+func ColorLog(format string, a ...interface{}) {
+	logStr := colorlog.ColorLogS(format, a...)
+	glog.Infoln(logStr)
 }
 
 func main() {
@@ -65,7 +70,7 @@ func main() {
 
 	wd, err := os.Getwd()
 	if err != nil {
-		ColorLog("[ERRO] 获取当前工作目录时，发生错误: [ %s ] \n", err)
+		ColorLog("[ERRO] 获取当前工作目录时，发生错误: [ %s ]", err)
 		return
 	}
 
@@ -90,11 +95,11 @@ func main() {
 
 func (w *watch) watcher(paths []string) {
 
-	ColorLog("[TRAC] 初始化文件监视器... \n")
+	ColorLog("[TRAC] wather begin...")
 	//初始化监听器
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		ColorLog("[ERRO] 初始化监视器失败: [ %s ] \n", err)
+		ColorLog("[ERRO] 初始化监视器失败: [ %s ]", err)
 		os.Exit(2)
 	}
 
@@ -108,13 +113,13 @@ func (w *watch) watcher(paths []string) {
 				}
 				if event.Op&event.Op == fsnotify.Chmod {
 					// if event.Op&event.Chmod == fsnotify.Chmod {
-					ColorLog("[SKIP] [ %s ] \n", event)
+					ColorLog("[SKIP] [ %s ]", event)
 					continue
 				}
 
 				mt := w.getFileModTime(event.Name)
 				if t := eventTime[event.Name]; mt == t {
-					ColorLog("[SKIP] [ %s ] \n", event.String())
+					ColorLog("[SKIP] [ %s ]", event.String())
 					build = false
 				}
 
@@ -123,22 +128,22 @@ func (w *watch) watcher(paths []string) {
 				if build {
 					go func() {
 						time.Sleep(time.Microsecond * 200)
-						ColorLog("[TRAC] 触发编译事件: < %s > \n", event)
+						ColorLog("[TRAC] 触发编译事件: < %s >", event)
 						w.build()
 					}()
 				}
 
 			case err := <-watcher.Errors:
-				ColorLog("[ERRO] 监控失败 [ %s ] \n", err)
+				ColorLog("[ERRO] 监控失败 [ %s ]", err)
 			}
 		}
 	}()
 
 	for _, path := range paths {
-		ColorLog("[TRAC] 监视文件夹: ( %s ) \n", path)
+		// ColorLog("[TRAC] 监视文件夹: ( %s )", path)
 		err = watcher.Add(path)
 		if err != nil {
-			ColorLog("[ERRO] 监视文件夹失败: [ %s ] \n", err)
+			ColorLog("[ERRO] 监视文件夹失败: [ %s ]", err)
 			os.Exit(2)
 		}
 	}
@@ -146,18 +151,18 @@ func (w *watch) watcher(paths []string) {
 
 // 开始编译代码
 func (w *watch) build() {
-	ColorLog("[INFO] 编译代码... \n")
+	ColorLog("[INFO] build < %s >...", w.appName)
 
 	goCmd := exec.Command("go", w.goCmdArgs...)
 	goCmd.Stderr = os.Stderr
 	goCmd.Stdout = os.Stdout
 
 	if err := goCmd.Run(); err != nil {
-		ColorLog("[ERRO] 编译失败: [ %s ] \n", err)
+		ColorLog("[ERRO] 编译失败: [ %s ]", err)
 		return
 	}
 
-	ColorLog("[SUCC] 编译成功... \n")
+	ColorLog("[SUCC] build < %s > success !", w.appName)
 
 	w.restart()
 }
@@ -177,20 +182,20 @@ func (w *watch) restart() {
 		ColorLog("[SUCC] 旧进程被终止! \n")
 	}
 
-	ColorLog("[INFO] 重启 < %s > \n", w.appName)
+	// ColorLog("[INFO] restart < %s >", w.appName)
 	if strings.Index(w.appName, "./") == -1 {
 		w.appName = "./" + w.appName
 	}
 
-	ColorLog("[INFO] 启动新进程... \n")
+	// ColorLog("[INFO] 启动新进程... \n")
 	w.appCmd = exec.Command(w.appName)
 	w.appCmd.Stderr = os.Stderr
 	w.appCmd.Stdout = os.Stdout
 	if err := w.appCmd.Start(); err != nil {
-		ColorLog("[ERRO] 启动进程时出错: [ %s ] \n", err)
+		// ColorLog("[ERRO] 启动进程时出错: [ %s ] \n", err)
 	}
 
-	ColorLog("[SUCC] 新进程已经启动...\n")
+	ColorLog("[SUCC] new < %s > restarted !", w.appName)
 }
 
 func (w *watch) checkIfWatchExt(name string) bool {
@@ -207,14 +212,14 @@ func (w *watch) getFileModTime(path string) int64 {
 	f, err := os.Open(path)
 	if err != nil {
 
-		ColorLog("[ERRO] 文件打开失败 [ %s ]\n", err)
+		ColorLog("[ERRO] 文件打开失败 [ %s ]", err)
 		return time.Now().Unix()
 	}
 	defer f.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		ColorLog("[ERRO] 获取不到文件信息 [ %s ]\n", err)
+		ColorLog("[ERRO] 获取不到文件信息 [ %s ]", err)
 		return time.Now().Unix()
 	}
 
@@ -245,7 +250,7 @@ func recursivePath(recursive bool, paths []string) []string {
 
 	walk := func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
-			ColorLog("[ERRO] 遍历监视目录错误: [ %s ] \n", err)
+			ColorLog("[ERRO] 遍历监视目录错误: [ %s ]", err)
 		}
 
 		//(BUG):不能监视隐藏目录下的文件
@@ -257,7 +262,7 @@ func recursivePath(recursive bool, paths []string) []string {
 
 	for _, path := range paths {
 		if err := filepath.Walk(path, walk); err != nil {
-			ColorLog("[ERRO] 遍历监视目录错误: [ %s ] \n", err)
+			ColorLog("[ERRO] 遍历监视目录错误: [ %s ]", err)
 		}
 	}
 
