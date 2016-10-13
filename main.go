@@ -42,9 +42,10 @@ type watch struct {
 
 func ColorLog(format string, a ...interface{}) {
 	logStr := colorlog.ColorLogS(format, a...)
-	glog.Infoln(logStr)
+	glog.InfoDepth(1, logStr)
 }
 
+// TODO: add watch dir
 func main() {
 
 	// 初始化flag
@@ -73,7 +74,6 @@ func main() {
 		ColorLog("[ERRO] 获取当前工作目录时，发生错误: [ %s ]", err)
 		return
 	}
-
 	// 初始化goCmd的参数
 	args := []string{"build", "-o", outputName}
 	if len(mainFiles) > 0 {
@@ -111,6 +111,7 @@ func (w *watch) watcher(paths []string) {
 				if !w.checkIfWatchExt(event.Name) {
 					continue
 				}
+				ColorLog("[TRAC] %s file %s", event.Op.String(), event.Name)
 				if event.Op&event.Op == fsnotify.Chmod {
 					// if event.Op&event.Chmod == fsnotify.Chmod {
 					ColorLog("[SKIP] [ %s ]", event)
@@ -119,7 +120,7 @@ func (w *watch) watcher(paths []string) {
 
 				mt := w.getFileModTime(event.Name)
 				if t := eventTime[event.Name]; mt == t {
-					ColorLog("[SKIP] [ %s ]", event.String())
+					// ColorLog("[SKIP] [ %s ]", event.String())
 					build = false
 				}
 
@@ -128,7 +129,7 @@ func (w *watch) watcher(paths []string) {
 				if build {
 					go func() {
 						time.Sleep(time.Microsecond * 200)
-						ColorLog("[TRAC] 触发编译事件: < %s >", event)
+						// ColorLog("[TRAC] 触发编译事件: < %s >", event)
 						w.build()
 					}()
 				}
@@ -175,11 +176,11 @@ func (w *watch) restart() {
 	}()
 
 	if w.appCmd != nil && w.appCmd.Process != nil {
-		ColorLog("[INFO] 终止旧进程... \n")
+		// ColorLog("[INFO] 终止旧进程...")
 		if err := w.appCmd.Process.Kill(); err != nil {
 			ColorLog("[ERROR] 终止进程失败 [ %s ] ...\n", err)
 		}
-		ColorLog("[SUCC] 旧进程被终止! \n")
+		// ColorLog("[SUCC] 旧进程被终止! ")
 	}
 
 	// ColorLog("[INFO] restart < %s >", w.appName)
