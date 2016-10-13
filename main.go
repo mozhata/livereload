@@ -1,60 +1,6 @@
-// package main
-
-/*import (
-	"flag"
-
-	"github.com/fsnotify/fsnotify"
-	"github.com/golang/glog"
-)
-
-var log = glog.Infoln
-
-func openFlag() {
-	flag.Lookup("logtostderr").Value.Set("true")
-	flag.Parse()
-}
-
-func main() {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		// log.Fatal(err)
-		panic(err)
-	}
-	defer watcher.Close()
-
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				// log.Println("event:", event)
-				log("event: ", event)
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					// log.Println("modified file:", event.Name)
-					log("modified file:", event.Name)
-				}
-			case err := <-watcher.Errors:
-				// log.Println("error:", err)
-				log("error:", err)
-			}
-		}
-	}()
-
-	err = watcher.Add("../../../go_project/tools/")
-	// err = watcher.Add("/home/kang/go_project/tools/")
-	// err = watcher.Add("/tmp/foo")
-	if err != nil {
-		// log.Fatal(err)
-		log("err: ", err)
-		panic(err)
-	}
-	<-done
-}
-*/
 package main
 
 import (
-	// fsnotify "gopkg.in/fsnotify.v1"
 	"flag"
 	"fmt"
 	"os"
@@ -93,10 +39,6 @@ type watch struct {
 	appCmd    *exec.Cmd // appName的命令行包装引用，方便结束其进程。
 	goCmdArgs []string  // 传递给go build的参数
 }
-
-// func openLog() {
-// 	flag.Parse()
-// }
 
 func main() {
 
@@ -178,21 +120,8 @@ func (w *watch) watcher(paths []string) {
 
 				eventTime[event.Name] = mt
 
-				/*if(strings.HasSuffix(event.Name, ".go")){
-					build = true
-				}*/
-
 				if build {
 					go func() {
-						// scheduleTime = time.Now().Add(1 * time.Second)
-						// // wait until scheduleTime
-						// for {
-						// 	time.Sleep(scheduleTime.Sub(time.Now()))
-						// 	if time.Now().After(scheduleTime) {
-						// 		break
-						// 	}
-						// 	return
-						// }
 						time.Sleep(time.Microsecond * 200)
 						ColorLog("[TRAC] 触发编译事件: < %s > \n", event)
 						w.build()
