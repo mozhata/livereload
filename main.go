@@ -45,6 +45,8 @@ func ColorLog(format string, a ...interface{}) {
 	glog.InfoDepth(1, logStr)
 }
 
+var wathDir = flag.String("watch", "", "watch dir")
+
 // TODO: add watch dir
 func main() {
 
@@ -74,6 +76,14 @@ func main() {
 		ColorLog("[ERRO] 获取当前工作目录时，发生错误: [ %s ]", err)
 		return
 	}
+
+	if *wathDir != "" {
+		err := os.Chdir(*wathDir)
+		if err != nil {
+			ColorLog("[ERROR] failed to move into folder %s", *wathDir)
+		}
+	}
+
 	// 初始化goCmd的参数
 	args := []string{"build", "-o", outputName}
 	if len(mainFiles) > 0 {
