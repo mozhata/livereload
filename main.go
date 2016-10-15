@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"livereload/colorlog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/zykzhang/colorlog"
 )
 
 const usage = `
