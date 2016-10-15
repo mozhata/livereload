@@ -18,11 +18,11 @@ const usage = `
 
  Usage:
 
-  	-h     show help informations；
-  	-f	   指定main文件；
-  	-o     执行编译后的可执行文件名；
-  	-r     是否搜索子目录，默认为true；
-  	-watch 指定要监控的目录
+  	-h     show help informations;
+  	-f	   the main file;
+  	-o     the ouput binary name;
+  	-r     watch recursively; default true;
+  	-watch which folder shold watch;
 `
 
 var (
