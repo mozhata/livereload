@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/zykzhang/colorlog"
+	"github.com/zykzhang/livereload/colorlog"
 )
 
 const usage = `
