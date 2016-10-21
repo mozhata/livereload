@@ -103,6 +103,17 @@ func (w *watch) watcher(paths []string) {
 		for {
 			select {
 			case event := <-watcher.Events:
+				if event.Op == fsnotify.Create {
+					finfo, err := os.Stat(event.Name)
+					if err != nil {
+						logger.Error("os.Stat(%s) err. err: %s", event.Name, err)
+					}
+					if finfo.IsDir() {
+						logger.Info("add new floder %s to watcher", event.Name)
+						watcher.Add(event.Name)
+						continue
+					}
+				}
 				build := true
 				if !w.checkIfWatchExt(event.Name) {
 					continue
@@ -113,12 +124,12 @@ func (w *watch) watcher(paths []string) {
 					continue
 				}
 
-				mt := w.getFileModTime(event.Name)
-				if t := eventTime[event.Name]; mt == t {
-					build = false
-				}
+				// mt := w.getFileModTime(event.Name)
+				// if t := eventTime[event.Name]; mt == t {
+				// 	build = false
+				// }
 
-				eventTime[event.Name] = mt
+				// eventTime[event.Name] = mt
 
 				if build {
 					go func() {
