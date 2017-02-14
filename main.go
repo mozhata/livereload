@@ -31,7 +31,6 @@ var (
 	wathDir    = flag.String("watch", "", "which folder should watch")
 	outputName = flag.String("o", "", "the binary name")
 	mainFiles  = flag.String("f", "", "the main.go file")
-
 	eventTime = make(map[string]int64)
 
 	watchExts = []string{".go"}
