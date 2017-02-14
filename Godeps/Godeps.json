@@ -1,15 +1,15 @@
 {
-	"ImportPath": "github.com/zykzhang/livereload",
-	"GoVersion": "go1.6",
-	"GodepVersion": "v72",
+	"ImportPath": "github.com/mozhata/livereload",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/fsnotify/fsnotify",
-			"Comment": "v1.4.2",
-			"Rev": "629574ca2a5df945712d3079857300b5e4da0236"
+			"Comment": "v1.4.2-1-gbd2828f",
+			"Rev": "bd2828f9f176e52d7222e565abb2d338d3f3c103"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
