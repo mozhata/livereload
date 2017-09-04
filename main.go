@@ -31,7 +31,7 @@ var (
 	wathDir    = flag.String("watch", "", "which folder should watch")
 	outputName = flag.String("o", "", "the binary name")
 	mainFiles  = flag.String("f", "", "the main.go file")
-	eventTime = make(map[string]int64)
+	eventTime  = make(map[string]int64)
 
 	watchExts = []string{".go"}
 
@@ -102,6 +102,9 @@ func (w *watch) watcher(paths []string) {
 		for {
 			select {
 			case event := <-watcher.Events:
+				if strings.Contains(event.Name, "tmp-umask") {
+					continue
+				}
 				if event.Op == fsnotify.Create {
 					finfo, err := os.Stat(event.Name)
 					if err != nil {
