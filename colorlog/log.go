@@ -45,35 +45,35 @@ func NewLogger(prefix string) *Logger {
 // will append '\n' at the last
 func (l *Logger) Trace(format string, a ...interface{}) {
 	prefix := blue(TRAC)
-	l.Println(prefix, fmt.Sprintf(format, a...))
+	l.Output(2, prefix+" "+fmt.Sprintf(format, a...))
 }
 
 // Info output formatted string to stderr in blue color
 // will append '\n' at the last
 func (l *Logger) Info(format string, a ...interface{}) {
 	prefix := blue(INFO)
-	l.Println(prefix, fmt.Sprintf(format, a...))
+	l.Output(2, prefix+" "+fmt.Sprintf(format, a...))
 }
 
 // Success output formatted string to stderr in green color
 // will append '\n' at the last
 func (l *Logger) Success(format string, a ...interface{}) {
 	prefix := green(SUCC)
-	l.Println(prefix, fmt.Sprintf(format, a...))
+	l.Output(2, prefix+" "+fmt.Sprintf(format, a...))
 }
 
 // Warning output formatted string to stderr in Magenta color
 // will append '\n' at the last
 func (l *Logger) Warning(format string, a ...interface{}) {
 	prefix := magenta(WARN)
-	l.Println(prefix, fmt.Sprintf(format, a...))
+	l.Output(2, prefix+" "+fmt.Sprintf(format, a...))
 }
 
 // Error output formatted string to stderr in red color
 // will append '\n' at the last
 func (l *Logger) Error(format string, a ...interface{}) {
 	prefix := red(ERRO)
-	l.Println(prefix, fmt.Sprintf(format, a...))
+	l.Output(2, prefix+" "+fmt.Sprintf(format, a...))
 }
 
 func blue(s string) string {

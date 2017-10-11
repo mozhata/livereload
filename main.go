@@ -22,7 +22,7 @@ const usage = `
   	-f	   the main file;
   	-o     the ouput binary name;
   	-r     watch recursively; default true;
-  	-watch which folder shold watch;
+  	-watch which folder should watch;
 `
 
 var (
@@ -98,6 +98,7 @@ func (w *watch) watcher(paths []string) {
 		os.Exit(2)
 	}
 
+	var lstRebuildTime time.Time = time.Now()
 	go func() {
 		for {
 			select {
@@ -126,18 +127,13 @@ func (w *watch) watcher(paths []string) {
 					continue
 				}
 
-				// mt := w.getFileModTime(event.Name)
-				// if t := eventTime[event.Name]; mt == t {
-				// 	build = false
-				// }
-
-				// eventTime[event.Name] = mt
-
 				if build {
-					go func() {
-						time.Sleep(time.Microsecond * 200)
-						w.build()
-					}()
+					const interval = time.Microsecond * 200
+					if lstRebuildTime.Add(interval).After(time.Now()) {
+						continue
+					}
+					w.build()
+					lstRebuildTime = time.Now()
 				}
 
 			case err := <-watcher.Errors:
