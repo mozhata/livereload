@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
+	fwatcher "github.com/radovskyb/watcher"
+
 	"github.com/mozhata/livereload/colorlog"
 )
 
@@ -22,7 +23,7 @@ const usage = `
   	-f	   the main file;
   	-o     the ouput binary name;
   	-r     watch recursively; default true;
-  	-watch which folder should watch;
+	-watch which folder should watch;
 `
 
 var (
@@ -31,11 +32,10 @@ var (
 	wathDir    = flag.String("watch", "", "which folder should watch")
 	outputName = flag.String("o", "", "the binary name")
 	mainFiles  = flag.String("f", "", "the main.go file")
-	eventTime  = make(map[string]int64)
+	fileExts   = flag.String("exts", ".go", "comma separated list of file exts to watch")
 
-	watchExts = []string{".go"}
-
-	logger = colorlog.NewLogger("livereload: ")
+	watchExts []string
+	logger    = colorlog.NewLogger("livereload: ")
 )
 
 //热编译相关
@@ -45,12 +45,22 @@ type watch struct {
 	goCmdArgs []string  // 传递给go build的参数
 }
 
-func main() {
+func init() {
 	flag.Usage = func() {
 		fmt.Println(usage)
 	}
 	flag.Parse()
 
+	for _, ext := range strings.Split(*fileExts, ",") {
+		ext = strings.TrimSpace(ext)
+		if ext == "" {
+			continue
+		}
+		watchExts = append(watchExts, ext)
+	}
+}
+
+func main() {
 	if *showHelp {
 		flag.Usage()
 		return
@@ -79,76 +89,75 @@ func main() {
 		appName:   getAppName(*outputName, wd),
 		goCmdArgs: args,
 	}
-
-	w.watcher(recursivePath(*recursive, append(flag.Args(), wd)))
-
 	go w.build()
 
-	done := make(chan bool)
-	<-done
+	w.Watch(recursivePath(*recursive, append(flag.Args(), wd)))
 }
 
-func (w *watch) watcher(paths []string) {
+func (w *watch) Watch(paths []string) {
 
 	logger.Trace("watcher begin...")
 	//初始化监听器
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		logger.Error("failed to watch the folder: [%s]", err)
-		os.Exit(2)
-	}
 
-	var lstRebuildTime time.Time = time.Now()
+	watcher := fwatcher.New()
+	watcher.IgnoreHiddenFiles(true)
+	watcher.FilterOps(fwatcher.Create, fwatcher.Write, fwatcher.Remove, fwatcher.Rename, fwatcher.Move)
+
+	var lstRebuildTime = time.Now()
+	const interval = time.Microsecond * 200
+
 	go func() {
 		for {
 			select {
-			case event := <-watcher.Events:
-				if strings.Contains(event.Name, "tmp-umask") {
+			case event := <-watcher.Event:
+				if lstRebuildTime.Add(interval).After(time.Now()) {
 					continue
 				}
-				if event.Op == fsnotify.Create {
-					finfo, err := os.Stat(event.Name)
+				if !w.checkIfWatchExt(event.Path) {
+					continue
+				}
+
+				if strings.Contains(event.Path, "tmp-umask") {
+					continue
+				}
+				logger.Trace("%s file %s", event.Op.String(), event.Path)
+
+				switch event.Op {
+				case fwatcher.Create:
+					finfo, err := os.Stat(event.Path)
 					if err != nil {
-						logger.Error("os.Stat(%s) err. err: %s", event.Name, err)
+						logger.Error("os.Stat(%s) err. err: %s", event.Path, err)
 					}
 					if finfo.IsDir() {
-						logger.Info("add new floder %s to watcher", event.Name)
-						watcher.Add(event.Name)
+						logger.Info("add new floder %s to watcher", event.Path)
+						watcher.Add(event.Path)
 						continue
 					}
-				}
-				build := true
-				if !w.checkIfWatchExt(event.Name) {
-					continue
-				}
-				logger.Trace("%s file %s", event.Op.String(), event.Name)
-				if event.Op&event.Op == fsnotify.Chmod {
-					logger.Warning("SKIP [%s]", event)
-					continue
-				}
-
-				if build {
-					const interval = time.Microsecond * 200
-					if lstRebuildTime.Add(interval).After(time.Now()) {
-						continue
+				case fwatcher.Remove:
+					if err := watcher.Remove(event.Path); err != nil {
+						logger.Error("try to remove %s failed", event.Path)
 					}
-					w.build()
-					lstRebuildTime = time.Now()
+				default:
 				}
 
-			case err := <-watcher.Errors:
+				w.build()
+				lstRebuildTime = time.Now()
+
+			case err := <-watcher.Error:
 				logger.Error("watch folder err: [%s]", err)
 			}
 		}
 	}()
 
 	for _, path := range paths {
-		err = watcher.Add(path)
+		err := watcher.Add(path)
 		if err != nil {
 			logger.Error("watch folder err [%s]", err)
 			os.Exit(2)
 		}
 	}
+
+	watcher.Start(interval)
 }
 
 // 开始编译代码
